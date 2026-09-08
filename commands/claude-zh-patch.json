@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "claude-zh-patch",
+  "version": "1.0.0",
+  "title": "claude中文补丁",
+  "description": "",
+  "kind": "shell",
+  "command": "osascript -e 'do shell script \"/opt/miniconda3/bin/python3 /tmp/claude-zh-cn-v3/scripts/patch_claude_zh_cn.py --user-home \\\"$HOME\\\" --launch\" with administrator privileges'"
+}

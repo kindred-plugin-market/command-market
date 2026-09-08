@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "clear-browser-history",
+  "version": "1.0.0",
+  "title": "清除浏览记录",
+  "description": "",
+  "kind": "shell",
+  "command": "# 1. 关闭 QuickTime Player\nosascript -e 'quit app \"QuickTime Player\"'\n\n# 2. 删除新版 macOS 的 defaults 键\ndefaults delete com.apple.QuickTimePlayerX MGRecentDocumentURLBookmarks 2>/dev/null\ndefaults delete com.apple.QuickTimePlayerX MGRecentDocumentsSharedFileListIsValid 2>/dev/null\n\n# 3. 老版本兜底\nrm -f ~/Library/Preferences/com.apple.LSSharedFileList.ApplicationRecentDocuments/com.apple.quicktimeplayerx.sfl2 2>/dev/null\n\n# 4. 重新打开确认\nopen -a \"QuickTime Player\""
+}

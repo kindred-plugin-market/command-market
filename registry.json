@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-08T15:41:09Z",
+  "commands": [
+    {
+      "id": "builtin-elevate-app",
+      "version": "1.0.0",
+      "title": "以管理员权限打开应用",
+      "description": "运行后会弹出选择框，挑选一个应用并以管理员权限打开。类似功能也在「应用管理 → 高级 → 应用隔离授权」中（用于解除 Gatekeeper 隔离），但那里只清除隔离标记，本卡片可直接提权启动应用。",
+      "kind": "shellAdmin",
+      "file": "commands/builtin-elevate-app.json",
+      "sha256": "32d027a8f30bb9f848b460e84815a47b70357754a2d3b486e87f5662ab1aba90",
+      "size": 676
+    },
+    {
+      "id": "claude-zh-patch",
+      "version": "1.0.0",
+      "title": "claude中文补丁",
+      "description": "",
+      "kind": "shell",
+      "file": "commands/claude-zh-patch.json",
+      "sha256": "3a5887f8d306f77a3516fbd5f15a6525c6d6657f3a7ae5ccbd5954535771b40e",
+      "size": 342
+    },
+    {
+      "id": "clear-browser-history",
+      "version": "1.0.0",
+      "title": "清除浏览记录",
+      "description": "",
+      "kind": "shell",
+      "file": "commands/clear-browser-history.json",
+      "sha256": "c1448a2a19598796bf6a52c4f503f0cba920a03c0eae4323d9b1fbaea4e8ff0d",
+      "size": 676
+    }
+  ]
+}

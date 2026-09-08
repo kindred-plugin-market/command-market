@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin-elevate-app",
+  "version": "1.0.0",
+  "title": "以管理员权限打开应用",
+  "description": "运行后会弹出选择框，挑选一个应用并以管理员权限打开。类似功能也在「应用管理 → 高级 → 应用隔离授权」中（用于解除 Gatekeeper 隔离），但那里只清除隔离标记，本卡片可直接提权启动应用。",
+  "kind": "shellAdmin",
+  "command": "osascript -e 'set theApp to choose application with prompt \"选择要以管理员权限打开的应用\"\nset appPath to POSIX path of (theApp as alias)\ndo shell script \"open -a \" & quoted form of appPath'",
+  "icon": "shield"
+}
