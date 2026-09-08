@@ -33,11 +33,14 @@ command-market/
 ```bash
 node scripts/build-registry.mjs   # 重算 sha256/size 并重写 registry.json
 git add -A && git commit -m "feat(command): <说明>" && git push
+# CI 自动重算 registry.json（无需手动跑 build-registry；本地想预览再跑一遍也无妨）
 ```
 
-推送后，在 Bench 侧配置市场源环境变量即可拉取：
+本仓库属 GitHub 组织 [`kindred-plugin-market`](https://github.com/kindred-plugin-market)（与
+[plugin-market](https://github.com/kindred-plugin-market/plugin-market) 插件市场并列）。推送 main 后
+CI 自动重算 `registry.json`，Bench 侧配置市场源即可拉取：
 
-- `BENCH_COMMAND_MARKET_URL`：远程索引 URL（如 GitHub Raw / jsDelivr 指向 `registry.json`，https）；
+- `BENCH_COMMAND_MARKET_URL=https://raw.githubusercontent.com/kindred-plugin-market/command-market/main/registry.json`
 - `BENCH_COMMAND_MARKET_DIR`：本地目录（开发调试用，指向本文件夹）。
 
 两者都未配置时，Bench 命令中心的「命令市场」显示为空（能力保留，不影响本地命令）。

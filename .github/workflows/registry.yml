@@ -1,0 +1,37 @@
+name: Registry
+
+# push main → 重算 registry.json（命令文件 sha256/size）；
+# 若有漂移自动 commit 回 main（保证索引与命令文件永远一致）。
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Rebuild registry
+        run: node scripts/build-registry.mjs
+
+      - name: Commit updated registry
+        run: |
+          if [[ -n "$(git status --porcelain registry.json)" ]]; then
+            git config user.name "bench-market-bot"
+            git config user.email "bench-market-bot@users.noreply.github.com"
+            git add registry.json
+            git commit -m "chore: rebuild registry.json [skip ci]"
+            git push
+          else
+            echo "registry.json up to date"
+          fi
