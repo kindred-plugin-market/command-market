@@ -30,7 +30,7 @@ const KNOWN = {
   rule: ["schemaVersion", "id", "version", "title", "description", "match", "detection"],
   match: ["registrableDomain", "hosts"],
   detection: ["loginCheck", "fallback"],
-  loginCheck: ["url", "method", "expect"],
+  loginCheck: ["url", "method", "expect", "prerequisiteCookies"],
   expect: ["kind", "path", "loggedIn", "loggedOut"],
   fallback: ["loggedIn", "loggedOut"],
   condition: ["kind", "value", "presence"],
@@ -93,6 +93,14 @@ function validateLoginCheck(name, domain, check) {
   if (!sameRegistrableDomain(url.hostname, domain))
     fail(name, `loginCheck.url host \`${url.hostname}\` must share registrable domain \`${domain}\` (same-domain rule)`)
   validateExpect(name, check.expect)
+  if (check.prerequisiteCookies !== undefined) {
+    if (!Array.isArray(check.prerequisiteCookies) || check.prerequisiteCookies.length === 0)
+      fail(name, `loginCheck.prerequisiteCookies must be a non-empty array`)
+    for (const c of check.prerequisiteCookies) {
+      if (typeof c !== "string" || c.length === 0)
+        fail(name, `loginCheck.prerequisiteCookies must contain non-empty strings`)
+    }
+  }
 }
 
 function validateCondition(name, side, cond) {
