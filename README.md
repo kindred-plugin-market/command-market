@@ -66,10 +66,14 @@ CI 自动重算 `registry.json`，Bench 侧配置市场源即可拉取：
 command-market/
 ├── registry.json          # 命令市场索引（不变）
 ├── commands/              # 命令文件（不变）
-├── rules.json             # 登录规则索引（新增；schemaVersion 1）
-└── rules/
-    ├── <id>.json          # 单站点规则，文件名 = 规则 id = 可注册域（如 trae.cn.json）
-    └── generic.json       # 通用兜底规则（id 固定 "generic"，match 省略 = 全局生效）
+├── rules.json             # 登录规则索引（schemaVersion 1）
+├── rules/
+│   ├── <id>.json          # 单站点规则，文件名 = 规则 id = 可注册域（如 trae.cn.json）
+│   └── generic.json       # 通用兜底规则（id 固定 "generic"，match 省略 = 全局生效）
+└── skills/
+    └── login-rule-authoring/SKILL.md
+                            # 规则作者方法论（AI 用：站点登录规则的调研/实测/发布 SOP
+                            # 与技术家族分类；不进索引，宿主不消费，CI 不校验）
 ```
 
 ## 规则文件格式（schema v1）

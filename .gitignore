@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Editors / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node（当前 scripts 零依赖，防后续引入依赖后污染仓库）
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.eslintcache
+
+# 环境变量 / 密钥
+.env
+.env.*
+!.env.example
+
+# 构建产物（如有）
+dist/
+build/
+coverage/
+
+# 本地 AI 助手工作区数据（若需纳入版本管理可删除此行）
+.workbuddy/
