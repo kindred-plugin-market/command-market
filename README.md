@@ -51,3 +51,74 @@ CI 自动重算 `registry.json`，Bench 侧配置市场源即可拉取：
 - 每个命令文件按 registry 登记的 `sha256` + `size` 校验，不符即拒绝安装；
 - 安装走版本单调检查：同 id 已装版本 ≥ 新版本时拒绝降级；
 - `kind` 与 `command` 非法即拒绝；安装记录来源与版本（可升级、可追溯）。
+
+---
+
+# 登录规则板块（login rules）
+
+> 本仓库同时承载 Bench 账号管理的**登录判定规则包**：站点登录态检测规则与 Bench 应用解耦发布——修正/新增站点规则不需要重新发布 Bench 客户端。
+> 规则是**纯声明式 JSON**（不含可执行内容），由 Bench 宿主（Rust）解释执行；判定引擎随 Bench 版本发布，本板块只发「站点先验配置」。
+> 契约规格见 Bench 仓库 `docs/reference/login-rulepack-spec.md`（规格真相源）。与命令市场体系相互独立：`registry.json`（命令）/ `rules.json`（登录规则）各自独立演进 `schemaVersion`，老客户端不受本板块影响。
+
+## 目录结构
+
+```
+command-market/
+├── registry.json          # 命令市场索引（不变）
+├── commands/              # 命令文件（不变）
+├── rules.json             # 登录规则索引（新增；schemaVersion 1）
+└── rules/
+    └── <id>.json          # 单站点规则，文件名 = 规则 id = 可注册域（如 trae.cn.json）
+```
+
+## 规则文件格式（schema v1）
+
+```jsonc
+{
+  "schemaVersion": 1,
+  "id": "trae.cn",                    // 可注册域，= 文件名，发布后不可改
+  "version": "1.0.0",                 // 三段语义化版本，更新时递增
+  "title": "Trae 云端 IDE",
+  "description": "…",
+  "match": {
+    "registrableDomain": "trae.cn",   // 必填，= id
+    "hosts": ["www.trae.cn", "api.trae.cn"] // 可选，精确 host 匹配（specificity 更高）
+  },
+  "detection": {
+    "loginCheck": {                   // 可选；S1 服务端权威探针（强判据）
+      "url": "https://api.trae.cn/cloudide/api/v3/trae/CheckLogin",
+      "method": "POST",               // 白名单 GET | POST（POST 空请求体）
+      "expect": {
+        "kind": "jsonBool",           // status | jsonBool | bodyContains
+        "path": "Result.IsLogin"
+      }
+    },
+    "fallback": {                     // 可选；弱证据（loginCheck 缺失/不可用时）
+      "loggedIn":  [{ "kind": "text", "value": "退出登录" }],
+      "loggedOut": [{ "kind": "selector", "value": "a[href^='/login']" }]
+    }
+  }
+}
+```
+
+### 安全铁律（构建脚本与宿主双重校验，fail-closed）
+
+- `loginCheck.url` 必须 **https** 且与 `match.registrableDomain` **同一可注册域**——loginCheck 携带账号 cookie 发请求，同域约束保证规则投毒无法把 session 发往第三方；
+- `loginCheck.method` 白名单 `GET | POST`（POST 空请求体，查询型鉴权接口语义）；不跟随重定向；
+- `fallback` 仅允许 `text` / `selector` 两类弱证据（cookie/storage 存在性启发已被实测证伪，不收录）；
+- 未知字段、非法 kind、路径穿越一律拒绝。
+
+## 发布流程（新增/修改规则后）
+
+```bash
+node scripts/build-rules.mjs      # 校验 + 重算 sha256/size 并重写 rules.json
+git add -A && git commit -m "feat(rule): <说明>" && git push
+# CI 自动重算 rules.json 兜底；Bench 端 24h TTL 拉取生效（或重启应用）
+```
+
+## Bench 宿主消费方式
+
+- 默认源（零配置）：`https://raw.githubusercontent.com/kindred-plugin-market/command-market/main/rules.json`
+- env 覆盖：`BENCH_LOGIN_RULES_URL`（https 规则索引 URL）或 `BENCH_LOGIN_RULES_DIR`（本地目录，开发调试直接读盘）
+- 缓存：`$APPDATA/login-rules/`；拉取失败静默沿用旧缓存或内置规则，不阻塞探测
+- 优先级：用户手配规则 > 本仓库远程规则 > Bench bundled 内置规则 > 预设文本

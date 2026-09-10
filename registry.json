@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-08T16:45:36Z",
+  "updatedAt": "2026-09-10T03:02:15Z",
   "commands": [
     {
       "id": "builtin-elevate-app",

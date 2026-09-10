@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-10T03:02:15Z",
+  "rules": [
+    {
+      "id": "github.com",
+      "version": "1.0.0",
+      "title": "GitHub",
+      "description": "api.github.com/user 匿名返回 401、已登录返回 200（服务端权威）；fallback 提供语言无关的未登录选择器与页头文本弱证据。",
+      "file": "rules/github.com.json",
+      "sha256": "5eefec9fca9a3229ff988ea1836f86eb3dc9d3fd3b4a506e683acbacff190e10",
+      "size": 832
+    },
+    {
+      "id": "trae.cn",
+      "version": "1.0.0",
+      "title": "Trae 云端 IDE",
+      "description": "使用 Trae 官方鉴权接口 CheckLogin 判定登录态（匿名可访问，凭证走 .trae.cn 域 cookie，跨子域自动携带；接口仅接受 POST）。SPA 同构 shell 无文本区分度，故不提供 fallback。",
+      "file": "rules/trae.cn.json",
+      "sha256": "d57adc22fdad113aefe42dfb25aeb24beae5334c8ebc0bb4eed686f724d22e61",
+      "size": 664
+    }
+  ]
+}
