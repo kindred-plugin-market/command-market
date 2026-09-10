@@ -1,7 +1,16 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10T03:08:04Z",
+  "updatedAt": "2026-09-10T04:00:46Z",
   "rules": [
+    {
+      "id": "generic",
+      "version": "1.0.0",
+      "title": "通用登录判定（兜底）",
+      "description": "站点无特殊规则时的全局兜底：仅提供中英文页面文本弱证据（登录/注册 CTA vs 退出登录入口）。不定义 loginCheck——通用规则无法预知各站点同域鉴权接口，强行下发会破坏同域铁律。弱证据仅产生倾向性判定，站点特殊规则（trae.cn / github.com 等）优先于本规则。",
+      "file": "rules/generic.json",
+      "sha256": "e3d80cd23a27ce400a653b733aee9812a114c8d0c6031451b87f3766340001dd",
+      "size": 1252
+    },
     {
       "id": "github.com",
       "version": "1.0.0",

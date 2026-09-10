@@ -68,7 +68,8 @@ command-market/
 ├── commands/              # 命令文件（不变）
 ├── rules.json             # 登录规则索引（新增；schemaVersion 1）
 └── rules/
-    └── <id>.json          # 单站点规则，文件名 = 规则 id = 可注册域（如 trae.cn.json）
+    ├── <id>.json          # 单站点规则，文件名 = 规则 id = 可注册域（如 trae.cn.json）
+    └── generic.json       # 通用兜底规则（id 固定 "generic"，match 省略 = 全局生效）
 ```
 
 ## 规则文件格式（schema v1）
@@ -100,6 +101,14 @@ command-market/
   }
 }
 ```
+
+### 通用规则（generic，全局兜底）
+
+站点规则按可注册域匹配，**未命中任何站点规则的站点**回落到 `generic` 通用规则：
+
+- `id` 固定为 `"generic"`（非域名特例，构建脚本与宿主双侧放行）；`match` 必须省略（全局生效）；
+- **禁止定义 `loginCheck`**——通用规则无法预知各站点的同域鉴权接口，强行下发会破坏同域铁律；必须提供 `fallback` 文本弱证据；
+- 匹配优先级：站点特殊规则（精确 host > 可注册域）> generic 兜底；generic 恒为弱证据，不影响证据分层。
 
 ### 安全铁律（构建脚本与宿主双重校验，fail-closed）
 

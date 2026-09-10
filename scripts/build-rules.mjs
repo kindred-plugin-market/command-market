@@ -21,6 +21,10 @@ const RULES_DIR = join(MARKET, "rules")
 const RULES_INDEX_PATH = join(MARKET, "rules.json")
 const SCHEMA_VERSION = 1
 
+// 通用兜底规则 id（非域名）：match 必须省略（全局生效）、禁止 loginCheck
+//（通用规则无法预知各站点同域鉴权接口）、必须提供 fallback。站点特殊规则优先于它。
+const GENERIC_ID = "generic"
+
 // 与宿主 serde deny_unknown_fields 对齐的已知字段白名单。
 const KNOWN = {
   rule: ["schemaVersion", "id", "version", "title", "description", "match", "detection"],
@@ -120,24 +124,30 @@ function validateRule(name, fileBase, body) {
   const extra = unknownFields(body, KNOWN.rule)
   if (extra.length) fail(name, `unknown field(s): ${extra.join(", ")}`)
   if (body.schemaVersion !== SCHEMA_VERSION) fail(name, `schemaVersion must be ${SCHEMA_VERSION}`)
-  if (!isRegistrableDomain(body.id ?? "")) fail(name, `id \`${body.id}\` is not a valid registrable domain`)
+  const isGeneric = body.id === GENERIC_ID
+  if (!isGeneric && !isRegistrableDomain(body.id ?? ""))
+    fail(name, `id \`${body.id}\` is not a valid registrable domain`)
   if (body.id !== fileBase) fail(name, `id \`${body.id}\` must equal file name (without .json)`)
   if (!isSemver(body.version ?? "")) fail(name, `version \`${body.version}\` must be X.Y.Z`)
   if (typeof body.title !== "string" || body.title.trim().length === 0)
     fail(name, `title must be a non-empty string`)
 
   const match = body.match
-  if (!match || typeof match !== "object") fail(name, `match is required`)
-  const matchExtra = unknownFields(match, KNOWN.match)
-  if (matchExtra.length) fail(name, `match has unknown field(s): ${matchExtra.join(", ")}`)
-  if (match.registrableDomain !== body.id)
-    fail(name, `match.registrableDomain must equal id \`${body.id}\``)
-  if (match.hosts !== undefined) {
-    if (!Array.isArray(match.hosts)) fail(name, `match.hosts must be an array`)
-    for (const host of match.hosts) {
-      if (!isHost(host)) fail(name, `match.hosts entry \`${host}\` is not a valid host`)
-      if (!sameRegistrableDomain(host, body.id))
-        fail(name, `match.hosts entry \`${host}\` must share registrable domain \`${body.id}\``)
+  if (isGeneric) {
+    if (match !== undefined) fail(name, `generic rule must not define match (applies globally)`)
+  } else {
+    if (!match || typeof match !== "object") fail(name, `match is required`)
+    const matchExtra = unknownFields(match, KNOWN.match)
+    if (matchExtra.length) fail(name, `match has unknown field(s): ${matchExtra.join(", ")}`)
+    if (match.registrableDomain !== body.id)
+      fail(name, `match.registrableDomain must equal id \`${body.id}\``)
+    if (match.hosts !== undefined) {
+      if (!Array.isArray(match.hosts)) fail(name, `match.hosts must be an array`)
+      for (const host of match.hosts) {
+        if (!isHost(host)) fail(name, `match.hosts entry \`${host}\` is not a valid host`)
+        if (!sameRegistrableDomain(host, body.id))
+          fail(name, `match.hosts entry \`${host}\` must share registrable domain \`${body.id}\``)
+      }
     }
   }
 
@@ -147,6 +157,14 @@ function validateRule(name, fileBase, body) {
   if (detExtra.length) fail(name, `detection has unknown field(s): ${detExtra.join(", ")}`)
   if (detection.loginCheck === undefined && detection.fallback === undefined)
     fail(name, `detection must define loginCheck and/or fallback`)
+  if (isGeneric) {
+    if (detection.loginCheck !== undefined)
+      fail(
+        name,
+        `generic rule must not define loginCheck (same-domain rule cannot apply globally)`
+      )
+    if (detection.fallback === undefined) fail(name, `generic rule must define fallback`)
+  }
   if (detection.loginCheck !== undefined) validateLoginCheck(name, body.id, detection.loginCheck)
   if (detection.fallback !== undefined) validateFallback(name, detection.fallback)
 }
