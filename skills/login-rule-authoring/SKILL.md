@@ -182,3 +182,12 @@ strings ~/Library/WebKit/<bundle>/WebsiteDataStore/<store>/Cookies/Cookies.binar
 - 宿主按 `jwtExpPath` 在「过期前留余量」时调度保活，而非固定周期轮询；
 - `riskLevel: high` 的家族（bytepassport）保活默认关闭，仅判定；
 - 全局频率预算归宿主统一管理（站点数量 × 各站下限），规则只给下限与风险标注。
+
+## 6. 规则来源与分发（架构上下文）
+
+> 权威规格：tauri-app `docs/reference/login-rulepack-spec.md`（唯一真相源；已采纳声明式规则、method 白名单 **GET/POST**）。本调研早期草稿曾写「强制 GET」，已被规格取代——method 按实测端点接受情况选 GET 或 POST（trae.cn 实测仅接受 POST）。可行性调研见宿主 `docs/explanation/login-detection-rulepack-research.md`（含待拍板项，**非现行规格**）。
+
+- **来源**：本 skill 产出的规则 JSON 进入 command-market 仓库 `rules/` 板块（与命令市场 `registry.json`/`commands/` 独立演进 `schemaVersion`）。发布：`node scripts/build-rules.mjs` 重算 `rules.json` 索引（sha256/size）→ commit & push main，CI 兜底。
+- **分发**：宿主全量拉取 `rules.json` + 命中站点文件，本地按可注册域匹配；**不**逐域名远程查询（隐私红线：避免泄露用户站点列表）。离线/不可达时静默沿用本地缓存，bundled 内置集兜底。
+- **优先级融合**：① 用户手配（`station.loginCheck`）最高 → ② 规则包（远程版本 > 内置版本按 semver 取新）→ ③ 内置 bundled 规则集 → ④ 现行预设（PresetLogout 中文 needle）兜底。规则包只提供「站点先验配置」，不改写证据优先级（S1 强判据 / 指纹否定短路 / 文本弱证据不变）。
+- **安全纪律**：同域铁律 + GET/POST 白名单 + 不跟随重定向 + fail-closed，全部以规格为准；schemaVersion 不匹配 / 未知 kind / 跨域 loginCheck → 整条规则拒绝加载并记审计。
