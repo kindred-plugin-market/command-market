@@ -1,7 +1,9 @@
 name: quality
 
 # 只读验证：本工作流绝不提交/推送/发布（D05 写回职责分离——写回仅存在于
-# registry.yml 的业务 rebuild job，且需 contents:write）。
+# registry.yml 的业务 rebuild job，且需 contents:write）。D07 起，那条写回路径
+# 由 registry.yml 内的同 SHA 只读门禁 job 前置约束（needs + result == success），
+# 本工作流的绿色不再被写回路径依赖——同 SHA 红绿分离的两条工作流形态已修掉。
 # Action 全部固定到 commit SHA（注释标版本），与宿主 T21 使用同一组解析结果。
 on:
   push:
