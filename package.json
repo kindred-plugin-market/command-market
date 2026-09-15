@@ -10,11 +10,20 @@
     "test": "node --test \"tests/**/*.test.mjs\"",
     "check:registry": "node scripts/build-registry.mjs --check",
     "check:rules": "node scripts/build-rules.mjs --check",
-    "check:indexes": "node scripts/build-registry.mjs --check && node scripts/build-rules.mjs --check"
+    "check:indexes": "node scripts/build-registry.mjs --check && node scripts/build-rules.mjs --check",
+    "hooks:install": "node scripts/quality/install-hooks.mjs",
+    "check:precommit": "node node_modules/lefthook/bin/index.js run pre-commit",
+    "prepare": "node scripts/quality/install-hooks.mjs"
   },
   "engines": {
     "node": ">=24.15.0"
   },
   "packageManager": "pnpm@12.4.1",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "lefthook": "^2.1.14",
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "markdown-link-check": "^3"
+  }
 }

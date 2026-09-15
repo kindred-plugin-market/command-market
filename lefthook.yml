@@ -1,0 +1,23 @@
+# Managed entries below are owned by bench-quality-cli (init/update). Do not edit by hand.
+# bench-quality-cli:managed-entries pre-commit.commands.partial-staging,pre-commit.commands.whitespace,pre-commit.commands.markdown-links,commit-msg.commands.commitlint
+pre-commit:
+  commands:
+    partial-staging:
+      priority: 2
+      run: node scripts/quality/guard-partial-staging.mjs
+      fail_text: Refusing to rewrite a partially staged file
+    whitespace:
+      priority: 3
+      run: node scripts/quality/guard-partial-staging.mjs && node scripts/quality/fix-staged-whitespace.mjs
+      stage_fixed: true
+      fail_text: Trailing whitespace could not be fixed automatically
+    markdown-links:
+      glob: "*.md"
+      priority: 10
+      run: node scripts/quality/check-markdown-links.mjs {staged_files}
+      fail_text: Dead link found in a staged markdown file
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm exec commitlint --edit {1}
+      fail_text: Commit message failed conventional-commits lint
