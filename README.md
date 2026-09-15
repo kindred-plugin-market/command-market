@@ -7,10 +7,14 @@
 ## 目录结构
 
 ```
+```
 command-market/
-├── registry.json          # 市场索引（schemaVersion / updatedAt / commands[]）
-└── commands/
-    └── <command-id>.json  # 单命令文件（schemaVersion/id/version/title/description/kind/command/icon）
+├── registry.json          # 命令索引（schemaVersion / updatedAt / commands[]：id/version/sha256/size）
+├── rules.json             # 规则索引（schemaVersion / updatedAt / rules[]，与 login_rules.rs 契约一致）
+├── commands/
+│   └── <command-id>.json  # 单命令文件（schemaVersion/id/version/title/description/kind/command/icon）
+└── rules/
+    └── <domain>.json      # 单规则文件（站点登录判定规则包，spec 见 Bench 仓库 docs/reference/login-rulepack-spec.md）
 ```
 
 ## 命令文件格式（schema v1）
@@ -28,22 +32,44 @@ command-market/
 }
 ```
 
-## 发布流程（改完命令后）
+## 工具链与质量门禁
+
+| 工具 | 版本 | 说明 |
+| ---- | ---- | ---- |
+| Node（本机/开发/主 CI） | `26.8.2` | [.node-version](.node-version)；最低支持 `>=24.15.0`（CI `compatibility` job 实测） |
+| pnpm | `12.4.1` | `packageManager`；`allowBuilds.lefthook: false` 必须保留 |
+
+质量门禁由 [bench-quality-cli](https://github.com/kindred-plugin-market/bench-quality-cli)（`data-market` profile）生成：
+`partial-staging`（拒绝部分暂存，先于 lefthook）→ `whitespace` → `markdown-links` → `commitlint`；
+索引一致性门禁由本仓库脚本承担（见下）。诊断与恢复见 `.bench-quality.json` 与生成器文档。
+
+## 检查与写入入口
+
+| 入口 | 作用 |
+| ---- | ---- |
+| `pnpm run check:registry` | 只读比对 commands/*.json ↔ registry.json（schema/集合/id/sha256/size），不一致即非零退出 |
+| `pnpm run check:rules` | 只读比对 rules/*.json ↔ rules.json |
+| `pnpm run check:indexes` | 两个索引一起校验 |
+| `pnpm run test` | node:test 回归（索引纯计算、fail-closed 校验、两索引一致性、工作流不变量） |
+| `pnpm run build:registry` / `build:rules` | **显式写入**：重算索引（payload 未变时保留 updatedAt，不产生时间漂移） |
+
+CI 分工（D05）：`quality.yml` 只读验证（contents:read，Node 26.8.2 主 + 24.15.0 兼容 job）；
+`registry.yml` 是**唯一写回入口**（contents:write，push main 后重算并回写索引，写回不可被并发取消）。
+
+## 发布流程（改完命令/规则后）
 
 ```bash
-node scripts/build-registry.mjs   # 重算 sha256/size 并重写 registry.json
-git add -A && git commit -m "feat(command): <说明>" && git push
-# CI 自动重算 registry.json（无需手动跑 build-registry；本地想预览再跑一遍也无妨）
+# 1. 修改 commands/*.json 或 rules/*.json
+# 2. 重算索引（源文件与索引必须同一个 commit；payload 未变则不产生 diff）
+pnpm run build:registry
+pnpm run build:rules
+# 3. 自检
+pnpm run check:indexes && pnpm test
+# 4. 审阅后逐文件暂存（不要 git add -A），源文件与对应索引一起提交
+git status && git diff
+git add commands/<id>.json registry.json
+git commit -m "feat(command): <说明>"
 ```
-
-本仓库属 GitHub 组织 [`kindred-plugin-market`](https://github.com/kindred-plugin-market)（与
-[plugin-market](https://github.com/kindred-plugin-market/plugin-market) 插件市场并列）。推送 main 后
-CI 自动重算 `registry.json`，Bench 侧配置市场源即可拉取：
-
-- `BENCH_COMMAND_MARKET_URL=https://raw.githubusercontent.com/kindred-plugin-market/command-market/main/registry.json`
-- `BENCH_COMMAND_MARKET_DIR`：本地目录（开发调试用，指向本文件夹）。
-
-两者都未配置时，Bench 命令中心的「命令市场」显示为空（能力保留，不影响本地命令）。
 
 ## 安全语义（与 Bench 宿主实现一致，fail-closed）
 
@@ -124,10 +150,16 @@ command-market/
 ## 发布流程（新增/修改规则后）
 
 ```bash
-node scripts/build-rules.mjs      # 校验 + 重算 sha256/size 并重写 rules.json
-git add -A && git commit -m "feat(rule): <说明>" && git push
-# CI 自动重算 rules.json 兜底；Bench 端 24h TTL 拉取生效（或重启应用）
+# 源文件与索引必须同一个 commit（payload 未变则不产生 diff）
+pnpm run build:rules
+pnpm run check:indexes && pnpm test
+git status && git diff
+git add rules/<domain>.json rules.json
+git commit -m "feat(rule): <说明>"
 ```
+
+推送 main 后 `registry.yml` 兜底重算；`quality.yml`（只读验证）失败时不允许写回。
+Bench 端 24h TTL 拉取生效（或重启应用）。
 
 ## Bench 宿主消费方式
 
