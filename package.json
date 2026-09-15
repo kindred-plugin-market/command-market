@@ -1,0 +1,16 @@
+{
+  "name": "bench-command-market",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Bench 命令/规则市场 — 数据真源与索引生成",
+  "scripts": {
+    "build:registry": "node scripts/build-registry.mjs",
+    "build:rules": "node scripts/build-rules.mjs"
+  },
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "packageManager": "pnpm@12.4.1",
+  "license": "MIT"
+}
