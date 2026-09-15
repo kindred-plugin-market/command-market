@@ -53,8 +53,10 @@ command-market/
 | `pnpm run test` | node:test 回归（索引纯计算、fail-closed 校验、两索引一致性、工作流不变量） |
 | `pnpm run build:registry` / `build:rules` | **显式写入**：重算索引（payload 未变时保留 updatedAt，不产生时间漂移） |
 
-CI 分工（D05）：`quality.yml` 只读验证（contents:read，Node 26.8.2 主 + 24.15.0 兼容 job）；
-`registry.yml` 是**唯一写回入口**（contents:write，push main 后重算并回写索引，写回不可被并发取消）。
+CI 分工（D07.1）：`quality.yml` 只读验证（contents:read，Node 26.8.2 主 + 24.15.0 兼容 job），
+**没有任何写回入口**。索引是 PR 的一部分：源文件与索引必须同时出现在待合并的变更里；
+CI 在 push/PR 上校验「索引是否与源一致」，不一致就以可执行的 hint 失败
+（`node scripts/build-registry.mjs` / `build-rules.mjs` 重算后再提交）。
 
 ## 发布流程（改完命令/规则后）
 
@@ -158,7 +160,8 @@ git add rules/<domain>.json rules.json
 git commit -m "feat(rule): <说明>"
 ```
 
-推送 main 后 `registry.yml` 兜底重算；`quality.yml`（只读验证）失败时不允许写回。
+索引与源文件同属一个 PR：`quality.yml`（只读）在源改动而索引未更新时直接失败并给出重算命令；
+不存在推送后自动重算的兜底 job（D07.1 模型）。
 Bench 端 24h TTL 拉取生效（或重启应用）。
 
 ## Bench 宿主消费方式
