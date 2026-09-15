@@ -1,0 +1,62 @@
+name: quality
+
+# 只读验证：本工作流绝不提交/推送/发布（D05 写回职责分离——写回仅存在于
+# registry.yml 的业务 rebuild job，且需 contents:write）。
+# Action 全部固定到 commit SHA（注释标版本），与宿主 T21 使用同一组解析结果。
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality (node 26.8.2 / macos)
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 12.4.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - name: Install (frozen)
+        run: pnpm install --frozen-lockfile
+      - name: Command index is consistent
+        run: node scripts/build-registry.mjs --check
+      - name: Rule index is consistent
+        run: node scripts/build-rules.mjs --check
+      - name: Tests
+        run: pnpm test
+
+  compatibility:
+    name: quality (node 24.15.0 / macos)
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 12.4.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.15.0
+          cache: pnpm
+      - name: Install (frozen)
+        run: pnpm install --frozen-lockfile
+      - name: Index checks
+        run: |
+          node scripts/build-registry.mjs --check
+          node scripts/build-rules.mjs --check
+      - name: Tests
+        run: pnpm test

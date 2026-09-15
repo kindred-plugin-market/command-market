@@ -2,6 +2,10 @@ name: Registry
 
 # push main → 重算 registry.json（命令文件 sha256/size）与 rules.json（登录规则 sha256/size）；
 # 若有漂移自动 commit 回 main（保证索引与源文件永远一致）。
+#
+# D05 写回职责分离：本工作流是**唯一**的写回入口（业务 rebuild job，需要
+# contents: write）；只读验证全部在 quality.yml（contents: read）。质量失败时
+# 本 job 不运行——写回必须建立在通过验证的源之上。
 on:
   push:
     branches: [main]
@@ -9,17 +13,32 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  # 写回不可被取消：并发组独立于 quality，且不允许 cancel-in-progress，
+  # 避免写回中途被新 push 掐断。
+  group: registry-writeback
+  cancel-in-progress: false
+
 jobs:
   rebuild:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
 
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
-          node-version: 24
+          version: 12.4.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install (frozen)
+        run: pnpm install --frozen-lockfile
 
       - name: Rebuild registry and rules index
         run: |
