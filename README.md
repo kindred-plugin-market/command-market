@@ -37,7 +37,7 @@ command-market/
 | 工具 | 版本 | 说明 |
 | ---- | ---- | ---- |
 | Node（本机/开发/主 CI） | `26.8.2` | [.node-version](.node-version)；最低支持 `>=24.15.0`（CI `compatibility` job 实测） |
-| pnpm | `12.4.1` | `packageManager`；`allowBuilds.lefthook: false` 必须保留 |
+| pnpm | `12.4.2` | `packageManager`；`allowBuilds.lefthook: false` 必须保留 |
 
 质量门禁由 [bench-quality-cli](https://github.com/kindred-plugin-market/bench-quality-cli)（`data-market` profile）生成：
 `partial-staging`（拒绝部分暂存，先于 lefthook）→ `whitespace` → `markdown-links` → `commitlint`；
