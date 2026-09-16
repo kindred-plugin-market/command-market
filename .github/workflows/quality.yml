@@ -44,6 +44,10 @@ jobs:
         run: node scripts/build-rules.mjs --check
       - name: Tests
         run: pnpm test
+      # P-audit：文档链接检查纳入远程只读 CI（本地 lefthook 可被 --no-verify 绕过，
+      # 远程 CI 是唯一强制点）。--all 扫描全部 markdown，不只 staged 文件。
+      - name: Markdown links are alive
+        run: node scripts/quality/check-markdown-links.mjs --all
 
   compatibility:
     name: quality (node 24.15.0 / macos)
